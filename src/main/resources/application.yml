@@ -1,0 +1,27 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: matching-engine-service
+
+  redis:
+    host: localhost
+    port: 6379
+
+logging:
+  level:
+    root: INFO
+    com.stock.matching_engine_service: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
