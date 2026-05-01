@@ -1,6 +1,5 @@
 package com.stock.matching_engine_service.service.impl;
 
-import com.stock.matching_engine_service.client.OrderServiceClient;
 import com.stock.matching_engine_service.client.PortfolioClient;
 import com.stock.matching_engine_service.dto.OrderEventDto;
 import com.stock.matching_engine_service.dto.TradeResponseDto;
@@ -22,15 +21,17 @@ import java.util.*;
 @RequiredArgsConstructor
 public class MatchingEngineServiceImpl implements MatchingEngineService {
 
-    // 🔥 Order books per stock
     private final Map<String, PriorityQueue<OrderEventDto>> buyOrderBook = new HashMap<>();
     private final Map<String, PriorityQueue<OrderEventDto>> sellOrderBook = new HashMap<>();
 
-    private final OrderServiceClient orderServiceClient;
     private final PortfolioClient portfolioClient;
 
     @Override
     public List<TradeResponseDto> processOrder(OrderEventDto order) {
+
+        if (order.getTimestamp() == null) {
+            order.setTimestamp(LocalDateTime.now());
+        }
 
         log.info("Processing order: {}", order);
 
@@ -50,7 +51,7 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
             sellOrders.add(order);
         }
 
-        // Step 2: Match
+        // Step 2: Matching
         while (!buyOrders.isEmpty() && !sellOrders.isEmpty()) {
 
             OrderEventDto buy = buyOrders.peek();
@@ -61,6 +62,7 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
                 int executedQty = Math.min(buy.getQuantity(), sell.getQuantity());
                 BigDecimal executedPrice = sell.getPrice();
 
+                // 🔥 CREATE TRADE
                 Trade trade = Trade.builder()
                         .id(System.currentTimeMillis())
                         .buyOrderId(buy.getOrderId())
@@ -76,16 +78,12 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
                 TradeResponseDto tradeDto = mapToDto(trade);
                 trades.add(tradeDto);
 
-                // 🔥 SAFE EXTERNAL CALLS
+                // 🔥 DIRECT USER IDs (NO API CALL)
+                Long buyerUserId = buy.getUserId();
+                Long sellerUserId = sell.getUserId();
+
+                // 🔥 SEND TO PORTFOLIO
                 try {
-                    // 1. Fetch order details
-                    var buyOrder = orderServiceClient.getOrderById(tradeDto.getBuyOrderId());
-                    var sellOrder = orderServiceClient.getOrderById(tradeDto.getSellOrderId());
-
-                    Long buyerUserId = Long.valueOf(buyOrder.get("userId").toString());
-                    Long sellerUserId = Long.valueOf(sellOrder.get("userId").toString());
-
-                    // 2. Build event
                     Map<String, Object> tradeEvent = new HashMap<>();
                     tradeEvent.put("tradeId", tradeDto.getTradeId());
                     tradeEvent.put("buyerUserId", buyerUserId);
@@ -94,13 +92,16 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
                     tradeEvent.put("quantity", tradeDto.getQuantity());
                     tradeEvent.put("price", tradeDto.getPrice());
 
-                    // 3. Send to Portfolio
+                    log.info("🔥 Sending trade to Portfolio: {}", tradeEvent);
+
                     portfolioClient.sendTrade(tradeEvent);
+
+                    log.info("✅ Trade sent successfully to Portfolio");
 
                     log.info("Trade sent to Portfolio Service: {}", tradeDto.getTradeId());
 
                 } catch (Exception e) {
-                    log.error("Failed to process trade externally: {}", e.getMessage());
+                    log.error("Failed to send trade to Portfolio: {}", e.getMessage());
                 }
 
                 // Update quantities
