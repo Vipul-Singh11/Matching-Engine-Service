@@ -1,5 +1,7 @@
 package com.stock.matching_engine_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.stock.matching_engine_service.enums.OrderType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -10,23 +12,27 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true) // 🔥 prevents crash from extra fields
 public class OrderEventDto {
 
-    @NotNull(message = "Order ID cannot be null")
+    @NotNull
     private Long orderId;
 
-    @NotBlank(message = "Stock symbol is required")
+    @NotNull
+    private Long userId; 
+
+    @NotBlank
     private String stockSymbol;
 
-    @Min(value = 1, message = "Quantity must be greater than 0")
+    @Min(1)
     private int quantity;
 
-    @NotNull(message = "Price cannot be null")
+    @NotNull
     private BigDecimal price;
 
-    @NotNull(message = "Order type is required")
+    @NotNull
     private OrderType orderType;
 
-    // 🔥 VERY IMPORTANT for FIFO
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp;
 }
