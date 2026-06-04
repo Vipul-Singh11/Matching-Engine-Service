@@ -1,5 +1,6 @@
 package com.stock.matching_engine_service.service.impl;
 
+import com.stock.matching_engine_service.client.OrderServiceClient;
 import com.stock.matching_engine_service.client.PortfolioClient;
 import com.stock.matching_engine_service.dto.OrderEventDto;
 import com.stock.matching_engine_service.dto.TradeResponseDto;
@@ -25,6 +26,7 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
     private final Map<String, PriorityQueue<OrderEventDto>> sellOrderBook = new HashMap<>();
 
     private final PortfolioClient portfolioClient;
+    private final OrderServiceClient orderServiceClient;
 
     @Override
     public List<TradeResponseDto> processOrder(OrderEventDto order) {
@@ -77,6 +79,26 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
 
                 TradeResponseDto tradeDto = mapToDto(trade);
                 trades.add(tradeDto);
+
+                try {
+
+                    orderServiceClient.updateOrderStatus(
+                            buy.getOrderId());
+
+                    orderServiceClient.updateOrderStatus(
+                            sell.getOrderId());
+
+                    log.info(
+                            "Orders {} and {} marked EXECUTED",
+                            buy.getOrderId(),
+                            sell.getOrderId());
+
+                } catch (Exception e) {
+
+                    log.error(
+                            "Failed to update order status: {}",
+                            e.getMessage());
+                }
 
                 // 🔥 DIRECT USER IDs (NO API CALL)
                 Long buyerUserId = buy.getUserId();

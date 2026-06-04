@@ -22,4 +22,15 @@ public class OrderServiceClient {
                 .bodyToMono(Map.class)
                 .block();
     }
+
+    public void updateOrderStatus(Long orderId) {
+        webClient.put()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/orders/{id}/status")
+                        .queryParam("status", "EXECUTED")
+                        .build(orderId))
+                .retrieve()
+                .bodyToMono(Void.class)
+                .block();
+    }
 }
