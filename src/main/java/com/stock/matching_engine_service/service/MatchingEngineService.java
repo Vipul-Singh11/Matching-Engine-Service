@@ -8,4 +8,6 @@ import java.util.List;
 public interface MatchingEngineService {
 
     List<TradeResponseDto> processOrder(OrderEventDto order);
+
+    void cancelOrder(Long orderId);
 }

@@ -152,4 +152,35 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
                 .executionTime(trade.getExecutionTime())
                 .build();
     }
+
+    @Override
+    public void cancelOrder(Long orderId) {
+
+        boolean removed = false;
+
+        for (PriorityQueue<OrderEventDto> queue : buyOrderBook.values()) {
+
+            removed |= queue.removeIf(
+                    order -> order.getOrderId().equals(orderId));
+        }
+
+        for (PriorityQueue<OrderEventDto> queue : sellOrderBook.values()) {
+
+            removed |= queue.removeIf(
+                    order -> order.getOrderId().equals(orderId));
+        }
+
+        if (removed) {
+
+            log.info(
+                    "Order {} removed from order book",
+                    orderId);
+
+        } else {
+
+            log.warn(
+                    "Order {} not found in order book",
+                    orderId);
+        }
+    }
 }

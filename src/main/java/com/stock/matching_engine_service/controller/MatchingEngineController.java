@@ -23,4 +23,14 @@ public class MatchingEngineController {
 
         return ResponseEntity.ok(matchingEngineService.processOrder(order));
     }
+
+    @DeleteMapping("/orders/{orderId}")
+    public ResponseEntity<String> cancelOrder(
+            @PathVariable Long orderId) {
+
+        matchingEngineService.cancelOrder(orderId);
+
+        return ResponseEntity.ok(
+                "Order removed from matching engine");
+    }
 }
