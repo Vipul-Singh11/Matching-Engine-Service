@@ -82,11 +82,13 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
 
                 try {
 
-                    orderServiceClient.updateOrderStatus(
-                            buy.getOrderId());
+                    orderServiceClient.updateOrderExecution(
+                            buy.getOrderId(),
+                            executedQty);
 
-                    orderServiceClient.updateOrderStatus(
-                            sell.getOrderId());
+                    orderServiceClient.updateOrderExecution(
+                            sell.getOrderId(),
+                            executedQty);
 
                     log.info(
                             "Orders {} and {} marked EXECUTED",

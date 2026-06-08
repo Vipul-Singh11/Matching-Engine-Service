@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.stock.matching_engine_service.dto.OrderExecutionDto;
+
 import java.util.Map;
 
 @Component
@@ -23,12 +25,15 @@ public class OrderServiceClient {
                 .block();
     }
 
-    public void updateOrderStatus(Long orderId) {
+    public void updateOrderExecution(
+        Long orderId,
+        Integer executedQuantity) {
+
         webClient.put()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/orders/{id}/status")
-                        .queryParam("status", "EXECUTED")
-                        .build(orderId))
+                .uri("/api/orders/" + orderId + "/execution")
+                .bodyValue(
+                        new OrderExecutionDto(
+                                executedQuantity))
                 .retrieve()
                 .bodyToMono(Void.class)
                 .block();
