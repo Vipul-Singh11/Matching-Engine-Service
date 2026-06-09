@@ -1,5 +1,6 @@
 package com.stock.matching_engine_service.client;
 
+import com.stock.matching_engine_service.dto.TradeEventDto;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -9,11 +10,15 @@ public class PortfolioClient {
 
     private final WebClient webClient;
 
-    public PortfolioClient(@Qualifier("portfolioServiceWebClient") WebClient webClient) {
+    public PortfolioClient(
+            @Qualifier("portfolioServiceWebClient")
+            WebClient webClient) {
+
         this.webClient = webClient;
     }
 
-    public void sendTrade(Object tradeEvent) {
+    public void sendTrade(TradeEventDto tradeEvent) {
+
         webClient.post()
                 .uri("/api/portfolio/trade")
                 .bodyValue(tradeEvent)

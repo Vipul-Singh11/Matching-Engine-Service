@@ -3,6 +3,7 @@ package com.stock.matching_engine_service.service.impl;
 import com.stock.matching_engine_service.client.OrderServiceClient;
 import com.stock.matching_engine_service.client.PortfolioClient;
 import com.stock.matching_engine_service.dto.OrderEventDto;
+import com.stock.matching_engine_service.dto.TradeEventDto;
 import com.stock.matching_engine_service.dto.TradeResponseDto;
 import com.stock.matching_engine_service.entity.Trade;
 import com.stock.matching_engine_service.enums.OrderType;
@@ -12,7 +13,6 @@ import com.stock.matching_engine_service.util.SellOrderComparator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -46,14 +46,12 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
         PriorityQueue<OrderEventDto> buyOrders = buyOrderBook.get(symbol);
         PriorityQueue<OrderEventDto> sellOrders = sellOrderBook.get(symbol);
 
-        // Step 1: Add order
         if (order.getOrderType() == OrderType.BUY) {
             buyOrders.add(order);
         } else {
             sellOrders.add(order);
         }
 
-        // Step 2: Matching
         while (!buyOrders.isEmpty() && !sellOrders.isEmpty()) {
 
             OrderEventDto buy = buyOrders.peek();
@@ -64,7 +62,6 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
                 int executedQty = Math.min(buy.getQuantity(), sell.getQuantity());
                 BigDecimal executedPrice = sell.getPrice();
 
-                // 🔥 CREATE TRADE
                 Trade trade = Trade.builder()
                         .id(System.currentTimeMillis())
                         .buyOrderId(buy.getOrderId())
@@ -108,15 +105,18 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
 
                 // 🔥 SEND TO PORTFOLIO
                 try {
-                    Map<String, Object> tradeEvent = new HashMap<>();
-                    tradeEvent.put("tradeId", tradeDto.getTradeId());
-                    tradeEvent.put("buyerUserId", buyerUserId);
-                    tradeEvent.put("sellerUserId", sellerUserId);
-                    tradeEvent.put("stockSymbol", tradeDto.getStockSymbol());
-                    tradeEvent.put("quantity", tradeDto.getQuantity());
-                    tradeEvent.put("price", tradeDto.getPrice());
+                    TradeEventDto tradeEvent = new TradeEventDto();
+                    tradeEvent.setTradeId(tradeDto.getTradeId());
+                    tradeEvent.setBuyOrderId(tradeDto.getBuyOrderId());
+                    tradeEvent.setSellOrderId(tradeDto.getSellOrderId());
+                    tradeEvent.setBuyerUserId(buyerUserId);
+                    tradeEvent.setSellerUserId(sellerUserId);
+                    tradeEvent.setStockSymbol(tradeDto.getStockSymbol());
+                    tradeEvent.setQuantity(tradeDto.getQuantity());
+                    tradeEvent.setPrice(tradeDto.getPrice());
+                    tradeEvent.setExecutionTime(tradeDto.getExecutionTime());
 
-                    log.info("🔥 Sending trade to Portfolio: {}", tradeEvent);
+                    log.info("Sending trade to Portfolio: {}", tradeEvent);
 
                     portfolioClient.sendTrade(tradeEvent);
 
@@ -128,7 +128,6 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
                     log.error("Failed to send trade to Portfolio: {}", e.getMessage());
                 }
 
-                // Update quantities
                 buy.setQuantity(buy.getQuantity() - executedQty);
                 sell.setQuantity(sell.getQuantity() - executedQty);
 
