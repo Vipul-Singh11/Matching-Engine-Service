@@ -1,5 +1,6 @@
 package com.stock.matching_engine_service.controller;
 
+import com.stock.matching_engine_service.dto.OrderBookDto;
 import com.stock.matching_engine_service.dto.OrderEventDto;
 import com.stock.matching_engine_service.dto.TradeResponseDto;
 import com.stock.matching_engine_service.service.MatchingEngineService;
@@ -7,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -32,5 +32,13 @@ public class MatchingEngineController {
 
         return ResponseEntity.ok(
                 "Order removed from matching engine");
+    }
+
+    @GetMapping("/orderbook/{symbol}")
+    public ResponseEntity<OrderBookDto> getOrderBook(
+            @PathVariable String symbol) {
+
+        return ResponseEntity.ok(
+                matchingEngineService.getOrderBook(symbol));
     }
 }

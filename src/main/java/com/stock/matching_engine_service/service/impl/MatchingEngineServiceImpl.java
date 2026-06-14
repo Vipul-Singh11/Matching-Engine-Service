@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.stock.matching_engine_service.dto.OrderBookDto;
+import com.stock.matching_engine_service.dto.OrderBookEntryDto;
 import java.util.*;
 
 @Service
@@ -183,5 +185,47 @@ public class MatchingEngineServiceImpl implements MatchingEngineService {
                     "Order {} not found in order book",
                     orderId);
         }
+    }
+
+    @Override
+    public OrderBookDto getOrderBook(String symbol) {
+
+        PriorityQueue<OrderEventDto> buyOrders =
+                buyOrderBook.getOrDefault(
+                        symbol,
+                        new PriorityQueue<>(new BuyOrderComparator()));
+
+        PriorityQueue<OrderEventDto> sellOrders =
+                sellOrderBook.getOrDefault(
+                        symbol,
+                        new PriorityQueue<>(new SellOrderComparator()));
+
+        List<OrderBookEntryDto> buyOrderDtos =
+                buyOrders.stream()
+                        .sorted(new BuyOrderComparator())
+                        .map(order -> OrderBookEntryDto.builder()
+                                .orderId(order.getOrderId())
+                                .userId(order.getUserId())
+                                .price(order.getPrice())
+                                .quantity(order.getQuantity())
+                                .build())
+                        .toList();
+
+        List<OrderBookEntryDto> sellOrderDtos =
+                sellOrders.stream()
+                        .sorted(new SellOrderComparator())
+                        .map(order -> OrderBookEntryDto.builder()
+                                .orderId(order.getOrderId())
+                                .userId(order.getUserId())
+                                .price(order.getPrice())
+                                .quantity(order.getQuantity())
+                                .build())
+                        .toList();
+
+        return OrderBookDto.builder()
+                .symbol(symbol)
+                .buyOrders(buyOrderDtos)
+                .sellOrders(sellOrderDtos)
+                .build();
     }
 }
