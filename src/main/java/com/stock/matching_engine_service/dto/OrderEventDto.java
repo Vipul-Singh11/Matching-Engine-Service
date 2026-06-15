@@ -2,6 +2,7 @@ package com.stock.matching_engine_service.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.stock.matching_engine_service.enums.OrderExecutionType;
 import com.stock.matching_engine_service.enums.OrderType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -32,6 +33,9 @@ public class OrderEventDto {
 
     @NotNull
     private OrderType orderType;
+
+    @NotNull
+    private OrderExecutionType executionType;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp;
